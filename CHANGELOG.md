@@ -13,6 +13,15 @@ Format versi menggunakan skema `MAJOR.MINOR.PATCH`:
 - **MINOR (x.Y.0):** Penambahan fitur atau kapabilitas baru yang tetap kompatibel ke belakang (*backward-compatible new features*). Digit PATCH direset ke 0.
 - **PATCH (x.y.Z):** Perbaikan bug, peningkatan stabilitas, atau perbaikan internal tanpa penambahan fitur baru (*backward-compatible bug fixes*).
 
+## [Unreleased]
+
+### Added
+- **Pipeline Build macOS `.app` (Apple Silicon arm64):**
+  - `launcher/main_darwin.go`: launcher native macOS berbasis `webview_go` (WKWebView) yang menjalankan backend FastAPI embedded dari `Contents/Resources` lalu membuka jendela web ke `http://127.0.0.1:8767`, dengan fallback menampilkan URL jika antarmuka webview gagal dibuat.
+  - `launcher/Info.plist.template`: template metadata bundle `Tatap.app` (`CFBundleIdentifier` `com.tatapp.app`, `NSHighResolutionCapable`).
+  - `tools/build_macos_app.py`: builder otonom yang mengunduh CPython 3.11.9 standalone (`aarch64-apple-darwin`) ke cache, memasang dependensi `requirements.txt` ke runtime bundle, menyalin backend & frontend, mengompilasi launcher Go (arm64, CGO aktif, `-ldflags "-s -w"`), menyusun `Info.plist`/ikon `.icns`, dan melakukan ad-hoc code sign (`codesign --deep --force --sign -`).
+  - `tools/bump_version.py`: reguler sinkronisasi README kini turut memperbarui aset macOS `tatap-macos-<versi>-arm64.dmg` untuk rilis publik mendatang.
+
 ## [2.10.0] - 2026-10-20
 
 ### Justifikasi SemVer 2.0.0 (MINOR: 2.9.4 -> 2.10.0)

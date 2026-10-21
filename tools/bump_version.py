@@ -93,6 +93,7 @@ def sync_readme_version(version: str) -> bool:
     def repl_readme(content: str) -> str:
         content = re.sub(r'tatap-release-v[0-9.]+\.apk', f'tatap-release-v{version}.apk', content)
         content = re.sub(r'tatap-tv-release-v[0-9.]+\.apk', f'tatap-tv-release-v{version}.apk', content)
+        content = re.sub(r'tatap-macos-[0-9.]+-arm64\.dmg', f'tatap-macos-{version}-arm64.dmg', content)
         return content
     updated = update_file(README_FILE, repl_readme)
     if updated:
