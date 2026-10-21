@@ -16,7 +16,12 @@ Format versi menggunakan skema `MAJOR.MINOR.PATCH`:
 ## [Unreleased]
 
 ### Added
-- **Pipeline Build macOS `.app` (Apple Silicon arm64):**
+- **Badge Status & Sinkronisasi AniList pada Halaman Detail:**
+  - `backend/api/anilist.py`: penambahan fungsi `anilist_get_media_entry_status` untuk mengambil status tontonan aktif (CURRENT, COMPLETED, dll.) dan progres episode dari AniList GraphQL `Viewer { mediaListEntry(...) }`.
+  - `backend/main.py`: penambahan endpoint API `/api/anime/{slug}/anilist-status` untuk memeriksa status tontonan AniList secara real-time.
+  - `frontend/index.html` & `frontend/css/style.css`: penambahan badge kustom `#tm-anilist-status` pada modal detail anime.
+  - `frontend/js/app.js`: integrasi fetch dan render badge status AniList secara otomatis saat membuka detail anime (`loadEps`).
+- **Integrasi Sinkronisasi Progres AniList (Lintas Perangkat):**
   - `launcher/main_darwin.go`: launcher native macOS berbasis `webview_go` (WKWebView) yang menjalankan backend FastAPI embedded dari `Contents/Resources` lalu membuka jendela web ke `http://127.0.0.1:8767`, dengan fallback menampilkan URL jika antarmuka webview gagal dibuat.
   - `launcher/Info.plist.template`: template metadata bundle `Tatap.app` (`CFBundleIdentifier` `com.tatapp.app`, `NSHighResolutionCapable`).
   - `tools/build_macos_app.py`: builder otonom yang mengunduh CPython 3.11.9 standalone (`aarch64-apple-darwin`) ke cache, memasang dependensi `requirements.txt` ke runtime bundle, menyalin backend & frontend, mengompilasi launcher Go (arm64, CGO aktif, `-ldflags "-s -w"`), menyusun `Info.plist`/ikon `.icns`, dan melakukan ad-hoc code sign (`codesign --deep --force --sign -`).

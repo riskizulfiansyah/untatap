@@ -33,8 +33,7 @@
 - **Deteksi Opening & Ending (AniSkip):** Mendeteksi durasi intro/outro otomatis dengan opsi lewati satu klik pada remote TV (`OK` / `>>`) maupun keyboard desktop (`S`).
 - **Resume Watch Multiplatform:** Menyimpan posisi tontonan per episode secara otomatis dan menyajikan dialog konfirmasi untuk melanjutkan atau memutar dari awal.
 - **Rasio Episode Ongoing & Katalog:** Menampilkan jumlah episode rilis terhadap total proyeksi musim (`Ep X/Y`), penanda status tamat, filter genre, serta jadwal rilis mingguan.
-- **Navigasi TV (10-Foot UI):** Antarmuka Leanback Android TV yang dioptimalkan penuh untuk remote kontrol D-pad tanpa memerlukan mouse pointer.
-
+- **Sinkronisasi Progres AniList (Lintas Perangkat):** Menghubungkan akun AniList untuk menyinkronkan riwayat dan status tontonan anime secara otomatis di berbagai perangkat.
 ---
 
 ## Subtitle Engine
@@ -63,6 +62,24 @@ Untuk menggunakan model bahasa kustom pada pemutar, ketik perintah berikut pada 
 Perintah manajemen: `:apikey` (cek status kunci), `:apikey clear` (hapus kunci), `:model <nama_model>` (ganti model).
 
 ---
+## Integrasi AniList (Sinkronisasi Lintas Perangkat)
+
+Untuk mencatat riwayat tontonan dan menyinkronkan status episode secara otomatis ke profil AniList Anda, Anda dapat menghubungkan token akses AniList melalui terminal perintah aplikasi atau panel pengaturan.
+
+### Cara Menghubungkan Akun AniList:
+1. Dapatkan token akses AniList pribadi Anda (melalui OAuth atau token API AniList).
+2. Buka aplikasi Tatap, tekan tombol `/` untuk memfokuskan terminal perintah, lalu ketik perintah berikut:
+   ```text
+   :anilist <YOUR_ANILIST_ACCESS_TOKEN>
+   ```
+3. Token akan disimpan secara lokal di basis data aplikasi dan digunakan secara otomatis setiap kali Anda selesai menonton episode anime.
+
+Perintah manajemen AniList pada terminal:
+- `:anilist` — Memeriksa status koneksi dan token AniList yang tersimpan saat ini.
+- `:anilist clear` — Menghapus token AniList dan menonaktifkan sinkronisasi otomatis.
+
+---
+
 
 ## Unduh dan Instalasi
 
@@ -122,6 +139,25 @@ Bagi pengguna yang ingin menjalankan Tatap sebagai layanan web mandiri (*self-ho
    APP_PORT=8767
    ```
    Akses antarmuka web dari perangkat apa pun di peramban via `http://<IP_SERVER_ANDA>:8767`.
+### Membangun Paket Aplikasi macOS (`Tatap.app` untuk Apple Silicon)
+
+Bagi pengguna macOS (Apple Silicon arm64) yang ingin menyusun aplikasi mandiri (*standalone macOS app bundle*) secara lokal:
+
+1. **Prasyarat Sistem:**
+   - macOS (Apple Silicon M1/M2/M3/M4)
+   - Python 3.11 atau lebih baru (`python3 --version`)
+   - Go compiler (`go version`)
+   - Xcode Command Line Tools (`xcode-select --install`)
+
+2. **Menjalankan Skrip Build:**
+   ```bash
+   python3 tools/build_macos_app.py
+   ```
+   *Skrip otomatis mengunduh CPython standalone, memasang pustaka, mengompilasi launcher native Go berbasis WKWebView, menyusun metadata `Info.plist`, serta melakukan ad-hoc code sign.*
+
+3. **Hasil & Penggunaan:**
+   - Berkas aplikasi akan tersedia di `dist/Tatap.app`.
+   - Anda dapat langsung mengekliknya atau memindahkannya ke folder **Applications** (`/Applications`).
 
 ---
 

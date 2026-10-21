@@ -25,7 +25,7 @@ browse:function(params,page){
 },
 episodes:function(slug){return jget("/api/anime/"+encodeURIComponent(slug)+"/episodes");},
 animeDetail:function(slug){return jget("/api/anime/"+encodeURIComponent(slug)+"/detail");},
-relations:function(slug,title){return jget("/api/anime/"+encodeURIComponent(slug)+"/relations?title="+encodeURIComponent(title||""));},
+anilistStatus:function(slug){return jget("/api/anime/"+encodeURIComponent(slug)+"/anilist-status");},
 resolve:function(slug,ep,mode,q,source,force){return jget("/api/stream/resolve?slug="+encodeURIComponent(slug)+"&ep="+ep+"&mode="+(mode||"sub")+"&q="+(q||"best")+(source?"&source="+encodeURIComponent(source):"")+(force?"&force=true":""));},
 genres:function(){return jget("/api/genres");},
 ping:function(){return jget("/api/ping");},
@@ -44,6 +44,8 @@ playMPV:function(b){return jpost("/api/play-mpv",b);},
 getSettings:function(){return jget("/api/settings");},
 setSetting:function(b){return jpost("/api/settings",b);},
 checkUpdate:function(force){return jget("/api/update/check"+(force?"?force=true":""));},
-uploadCustomSub:function(b){return jpost("/api/player/sub_custom",b);}
+uploadCustomSub:function(b){return jpost("/api/player/sub_custom",b);},
+getAnilistToken:function(){return jget("/api/anilist/token");},
+setAnilistToken:function(token){return jpost("/api/anilist/token",{token:token});}
 };
 

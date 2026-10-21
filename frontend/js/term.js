@@ -29,7 +29,7 @@ var Tui = (function () {
   function saveCmdHist(h){try{localStorage.setItem("tatap_hist",JSON.stringify(h.slice(0,50)));}catch(e){}}
 
   function cmdUsage(){
-    return "perintah:\n  cari <judul> | :musim | :lanjutan | :favorit | :katalog\n  :terbaru | :season <winter|spring|summer|fall> <tahun>\n  :switch [hianime|otaku] (ganti sumber video HiAnime / Otakudesu)\n  :filter [key=val...] | :filter reset\n  :genre <slug|title> | :genre | :genre --list | :genre reset\n  :update (cek versi rilis terbaru secara on-demand)\n  :apikey <key> | :ollama <key> | :groq <key> | :gemini <key> | :model <nama> | :apiurl <url>\n  :logs | :crt on|off|toggle | :ambient on|off|toggle\n  :riwayat | :favorit | :status | :bantuan | :q";
+    return "perintah:\n  cari <judul> | :musim | :lanjutan | :favorit | :katalog\n  :terbaru | :season <winter|spring|summer|fall> <tahun>\n  :switch [hianime|otaku] (ganti sumber video HiAnime / Otakudesu)\n  :filter [key=val...] | :filter reset\n  :genre <slug|title> | :genre | :genre --list | :genre reset\n  :anilist <token> (atur AniList API token untuk sinkronisasi progress lintas perangkat)\n  :update (cek versi rilis terbaru secara on-demand)\n  :apikey <key> | :ollama <key> | :groq <key> | :gemini <key> | :model <nama> | :apiurl <url>\n  :logs | :crt on|off|toggle | :ambient on|off|toggle\n  :riwayat | :favorit | :status | :bantuan | :q";
   }
 
   function applyFilter(){
@@ -1211,6 +1211,20 @@ var Tui = (function () {
       case "apikey":case "model":case "apiurl":
       case "ollama":case "groq":case "gemini":case "openai":
         await cmdTranslateSetting(cmd,args);break;
+      case "anilist":
+        if(!args){
+          var rTok = await Tatap.getAnilistToken();
+          var tVal = (rTok && rTok.data && rTok.data.token) || "";
+          log(tVal ? ("AniList token aktif: " + maskKey(tVal)) : "AniList token belum diatur. Gunakan: :anilist <token>", "ok");
+        } else {
+          var resAl = await Tatap.setAnilistToken(args.trim());
+          if(resAl && resAl.success){
+            log("AniList token berhasil disimpan!", "ok");
+          } else {
+            log("Gagal menyimpan AniList token", "err");
+          }
+        }
+        break;
       case "server":
         if(!args){
           var curSrv = localStorage.getItem("tatap_server") || (location.origin && location.origin !== "null" ? location.origin : "http://127.0.0.1:8767");
@@ -1495,7 +1509,7 @@ var Tui = (function () {
     inp.addEventListener("focus",onPromptFocus);
     inp.addEventListener("blur",onPromptBlur);
     inp.addEventListener("input",function(){if(inp.value.indexOf(":")===0){/* could show command hints */}});
-    document.addEventListener("keydown",onKey);
+    inp.addEventListener("paste",function(e){console.log("Paste event fired on #cmd", e);});
     $("help-close").addEventListener("click",function(){$("help-overlay").classList.add("hidden");});
     $("help-overlay").addEventListener("click",function(e){if(e.target===$("help-overlay"))$("help-overlay").classList.add("hidden");});
     // Genre modal listeners

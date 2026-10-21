@@ -1112,6 +1112,26 @@ async def anime_detail_endpoint(slug: str):
     except Exception as e:
         return fail(str(e))
 
+@app.get("/api/anime/{slug}/anilist-status")
+async def anime_anilist_status(slug: str):
+    try:
+        token = await get_setting("anilist_token", "")
+        if not token:
+            return ok({"synced": False, "status": None, "progress": 0})
+        media_id = await al.search_media_id_by_slug(slug)
+        if not media_id:
+            return ok({"synced": False, "status": None, "progress": 0})
+        entry = await al.anilist_get_media_entry_status(token, media_id)
+        if not entry:
+            return ok({"synced": False, "status": None, "progress": 0})
+        return ok({
+            "synced": True,
+            "status": entry.get("status"),
+            "progress": entry.get("progress", 0)
+        })
+    except Exception:
+        return ok({"synced": False, "status": None, "progress": 0})
+
 @app.get("/api/anime/{slug}/relations")
 async def anime_relations_endpoint(slug: str, title: str = Query("")):
     """Ambil daftar season/prekuel/sekuel terkait untuk anime yang sedang dibuka."""
@@ -2230,17 +2250,34 @@ async def history():
 @app.post("/api/history")
 async def save_hist(body: dict = None):
     body = body or {}
-    await add_history(
-        body.get("slug", ""),
-        body.get("title", ""),
-        int(body.get("episode", 1)),
-        body.get("mode", "sub"),
-        int(body.get("progress", 0)),
-        body.get("poster", ""),
-        body.get("type", "")
-    )
+    slug = body.get("slug", "")
+    title = body.get("title", "")
+    episode = int(body.get("episode", 1))
+    mode = body.get("mode", "sub")
+    progress = int(body.get("progress", 0))
+    poster = body.get("poster", "")
+    t_type = body.get("type", "")
+    anilist_id = int(body.get("anilist_id") or 0)
+    if not anilist_id and slug:
+        from api.anilist import search_media_id_by_slug
+        anilist_id = await search_media_id_by_slug(slug) or 0
+    token = await get_setting("anilist_token", "")
+    if token and anilist_id > 0:
+        import asyncio
+        from api.anilist import anilist_sync_progress
+        asyncio.create_task(anilist_sync_progress(token, anilist_id, episode))
     return ok(True)
 
+@app.get("/api/anilist/token")
+async def get_anilist_token():
+    return ok({"token": await get_setting("anilist_token", "")})
+
+@app.post("/api/anilist/token")
+async def set_anilist_token(body: dict = None):
+    body = body or {}
+    token = (body.get("token") or "").strip()
+    await set_setting("anilist_token", token)
+    return ok(True)
 @app.delete("/api/history")
 async def del_hist():
     await clear_history()

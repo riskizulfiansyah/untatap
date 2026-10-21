@@ -5,6 +5,7 @@ load_dotenv()
 
 APP_PORT = int(os.getenv("APP_PORT", "8767"))
 APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
+ANILIST_CLIENT_ID = os.getenv("ANILIST_CLIENT_ID", "")
 
 # --- satu-satunya sumber katalog (single source) ---
 HI_BASE = os.getenv("HI_BASE", "https://hianime.at")

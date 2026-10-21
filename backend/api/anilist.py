@@ -428,3 +428,115 @@ def anime_relations(search_query: str):
         return []
 
 
+
+UPDATE_PROGRESS_MUTATION = """
+mutation ($mediaId: Int, $progress: Int, $status: MediaListStatus) {
+  SaveMediaListEntry (mediaId: $mediaId, progress: $progress, status: $status) {
+    id
+    progress
+    status
+  }
+}
+"""
+
+VIEWER_PROGRESS_QUERY = """
+query {
+  Viewer {
+    id
+    name
+  }
+  Page(page: 1, perPage: 100) {
+    mediaList(userId: Viewer, type: ANIME, statusIn: [CURRENT, COMPLETED]) {
+      mediaId
+      progress
+      status
+    }
+  }
+}
+"""
+
+async def anilist_sync_progress(token: str, media_id: int, episode: int):
+    """Kirim progres tontonan (episode terakhir) ke AniList via GraphQL mutation."""
+    if not token or not media_id or episode is None:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            status = "CURRENT" if episode > 0 else "PLANNING"
+            res = await client.post(
+                ANILIST_URL,
+                json={
+                    "query": UPDATE_PROGRESS_MUTATION,
+                    "variables": {"mediaId": int(media_id), "progress": int(episode), "status": status}
+                },
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "User-Agent": UA}
+            )
+            data = res.json()
+            return "data" in data and data["data"].get("SaveMediaListEntry") is not None
+    except Exception:
+        return False
+
+async def anilist_get_viewer_progress(token: str):
+    """Ambil daftar list anime yang sedang ditonton user dari AniList beserta progresnya."""
+    if not token:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            res = await client.post(
+                ANILIST_URL,
+                json={"query": VIEWER_PROGRESS_QUERY},
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "User-Agent": UA}
+            )
+            data = res.json()
+            if "data" in data and data["data"]:
+                return data["data"]
+    except Exception:
+        return None
+
+def _al_post(query: str, variables: dict, token: str = "") -> dict:
+    """Kirim POST GraphQL ke AniList; token opsional untuk mutation."""
+    headers = {"Content-Type": "application/json", "User-Agent": UA}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    r = _get_al_client().post(ANILIST_URL, json={"query": query, "variables": variables}, headers=headers)
+    r.raise_for_status()
+    return r.json()
+
+MEDIA_LIST_ENTRY_QUERY = """
+query ($mediaId: Int) {
+  Viewer {
+    mediaListEntry(mediaId: $mediaId) {
+      status
+      progress
+    }
+  }
+}
+"""
+
+async def anilist_get_media_entry_status(token: str, media_id: int):
+    if not token or not media_id:
+        return None
+    try:
+        data = await asyncio.to_thread(_al_post, MEDIA_LIST_ENTRY_QUERY, {"mediaId": int(media_id)}, token)
+        entry = (data.get("data") or {}).get("Viewer", {}).get("mediaListEntry")
+        return entry
+    except Exception:
+        return None
+
+async def update_entry(token: str, media_id: int, episode: int, status: str = "CURRENT") -> None:
+    """Update progres episode user di list AniList (SaveMediaListEntry mutation)."""
+    import asyncio
+    mutation = """mutation ($mediaId: Int, $progress: Int, $status: MediaListStatus) {
+  SaveMediaListEntry(mediaId: $mediaId, progress: $progress, status: $status) { id progress status }
+}"""
+    await asyncio.to_thread(_al_post, mutation, {"mediaId": media_id, "progress": episode, "status": status}, token)
+
+async def get_media_id_by_slug(slug: str) -> int | None:
+    """Cari ID media AniList dari slug hianime lewat pencarian judul."""
+    import asyncio
+    query = "query ($search: String) { Media(search: $search, type: ANIME) { id } }"
+    d = await asyncio.to_thread(_al_post, query, {"search": slug})
+    media = (d.get("data") or {}).get("Media") or {}
+    return media.get("id")
+async def search_media_id_by_slug(slug: str) -> int | None:
+    """Alias untuk get_media_id_by_slug."""
+    return await get_media_id_by_slug(slug)

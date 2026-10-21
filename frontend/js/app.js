@@ -425,8 +425,21 @@ function loadEps(){
       var s = localStorage.getItem("tatap_last_ep_" + thisSlug);
       if(s) cur.lastWatchedEp = parseInt(s);
     } catch(e){}
-  }
 
+    var alBadge = $("tm-anilist-status");
+    if(alBadge){
+      alBadge.classList.add("hidden");
+      window.Tatap.anilistStatus(thisSlug).then(function(res){
+        if(thisSlug !== cur.slug) return;
+        if(res && res.success && res.data && res.data.synced){
+          var st = res.data.status || "WATCHING";
+          var prog = res.data.progress || 0;
+          alBadge.textContent = "ANILIST: " + st + " (Ep " + prog + ")";
+          alBadge.classList.remove("hidden");
+        }
+      }).catch(function(){});
+    }
+  }
   var countLabel = function(){
     var base = cur.eps.length + " episode";
     if(cur.eps_counter){

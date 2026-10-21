@@ -55,6 +55,10 @@ async def init_db():
             await db.execute("ALTER TABLE watch_history ADD COLUMN type TEXT DEFAULT ''")
         except Exception:
             pass
+        try:
+            await db.execute("ALTER TABLE watch_history ADD COLUMN anilist_id INTEGER DEFAULT 0")
+        except Exception:
+            pass
         await db.execute("""CREATE TABLE IF NOT EXISTS settings(
             key TEXT PRIMARY KEY, value TEXT)""")
         await db.execute("""CREATE TABLE IF NOT EXISTS browse_cache(
@@ -193,30 +197,30 @@ async def set_episode_cache(slug, ep, mode, master, variants, sub, sub_lang, ref
              referer or "", server or "", subs_json, intro_json, outro_json, _now()))
         await db.commit()
 
-async def add_history(slug, title, episode, mode="sub", progress=0, poster="", type=""):
+async def add_history(slug, title, episode, mode="sub", progress=0, poster="", type="", anilist_id=0):
     async with _connect_db() as db:
         if not poster and slug:
             # Preservasi poster dari riwayat sebelumnya agar tidak terhapus saat pembaruan progres
             async with db.execute("SELECT poster, type FROM watch_history WHERE slug=? AND poster != ''", (slug,)) as cur:
                 row = await cur.fetchone()
                 if row:
-                    if not poster and row[0]:
-                        poster = row[0]
-                    if not type and row[1]:
-                        type = row[1]
+                    if not poster and row[0]: poster = row[0]
+                    if not type and row[1]: type = row[1]
         if not poster and slug:
-            # Cari dari bookmarks jika ada
             async with db.execute("SELECT poster, type FROM bookmarks WHERE slug=? AND poster != ''", (slug,)) as cur:
                 row = await cur.fetchone()
                 if row:
-                    if not poster and row[0]:
-                        poster = row[0]
-                    if not type and row[1]:
-                        type = row[1]
+                    if not poster and row[0]: poster = row[0]
+                    if not type and row[1]: type = row[1]
+        if not anilist_id and slug:
+            async with db.execute("SELECT anilist_id FROM watch_history WHERE slug=? AND anilist_id > 0", (slug,)) as cur:
+                row = await cur.fetchone()
+                if row and row[0]:
+                    anilist_id = row[0]
         if slug:
             await db.execute("DELETE FROM watch_history WHERE slug=?", (slug,))
-        await db.execute("INSERT INTO watch_history(slug,title,episode,mode,progress,poster,type,played_at) VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP)",
-                         (slug, title, episode, mode, progress, poster or "", type or ""))
+        await db.execute("INSERT INTO watch_history(slug,title,episode,mode,progress,poster,type,anilist_id,played_at) VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)",
+                         (slug, title, episode, mode, progress, poster or "", type or "", int(anilist_id or 0)))
         await db.commit()
 
 async def get_history(limit=50):
