@@ -431,13 +431,13 @@ function loadEps(){
       alBadge.classList.add("hidden");
       window.Tatap.anilistStatus(thisSlug).then(function(res){
         if(thisSlug !== cur.slug) return;
-        if(res && res.success && res.data && res.data.synced){
-          var st = res.data.status || "WATCHING";
-          var prog = res.data.progress || 0;
-          alBadge.textContent = "ANILIST: " + st + " (Ep " + prog + ")";
+        if(res && res.success && res.data && res.data.synced && res.data.status){
+          alBadge.textContent = "Anilist " + res.data.status;
           alBadge.classList.remove("hidden");
+        } else {
+          alBadge.classList.add("hidden");
         }
-      }).catch(function(){});
+      }).catch(function(){ alBadge.classList.add("hidden"); });
     }
   }
   var countLabel = function(){
